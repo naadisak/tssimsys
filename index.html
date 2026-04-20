@@ -52,7 +52,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--text);font-si
 .btn-login{width:100%;background:var(--teal);color:#fff;border:none;padding:12px;border-radius:8px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;transition:.15s;margin-top:4px}
 .btn-login:hover{background:var(--navy)}
 .btn-login:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
-.login-error{background:var(--red-l);border:1px solid #ffb3aa;color:var(--red);border-radius:8px;padding:10px 14px;font-size:13px;margin-top:14px;display:none}
+.login-error{background:var(--red-l);border:1.5px solid var(--red);color:var(--red);border-radius:8px;padding:12px 14px;font-size:14px;font-weight:500;margin-top:14px;display:none;text-align:center}
 
 /* ── SYSTEM CLOSED BANNER ── */
 .sys-banner{border-radius:var(--r);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:10px;font-size:13px}
@@ -549,21 +549,28 @@ async function doLogin() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>กำลังเข้าสู่ระบบ...';
   try {
-    const res = await fetch(`${GAS_URL}?action=login&emp_id=${encodeURIComponent(emp_id)}&pin=${encodeURIComponent(pin)}`);
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 30000); // 30s timeout
+    const res  = await fetch(GAS_URL, {
+      method:  'POST',
+      signal:  ctrl.signal,
+      body:    JSON.stringify({ action: 'login', payload: { emp_id, pin } }),
+    });
+    clearTimeout(tid);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error);
     SESSION = { token: data.token, user: data.user };
     sessionStorage.setItem('tqm_session', JSON.stringify(SESSION));
     if (data.must_change_pw) {
-      // Store temp session and show change pw modal
+      showPage('page-app'); // show app behind modal
       document.getElementById('modal-changepw').classList.add('on');
       document.getElementById('cp-old').value = pin;
-      document.getElementById('page-login').classList.remove('active');
     } else {
       initApp();
     }
   } catch(e) {
-    showLoginError(e.message);
+    const msg = e.name === 'AbortError' ? 'หมดเวลาเชื่อมต่อ กรุณาลองใหม่' : (e.message || 'เกิดข้อผิดพลาด');
+    showLoginError(msg);
     btn.disabled = false;
     btn.textContent = 'เข้าสู่ระบบ';
   }
@@ -1122,11 +1129,21 @@ async function doArchive() {
 
 // ════════ HELPERS ════════
 async function gasPost(action, payload) {
-  const res=await fetch(GAS_URL,{
-    method:'POST',
-    body:JSON.stringify({action,token:SESSION?.token,payload}),
-  });
-  return res.json();
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), 30000);
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      signal: ctrl.signal,
+      body:   JSON.stringify({ action, token: SESSION?.token, payload }),
+    });
+    clearTimeout(tid);
+    return res.json();
+  } catch(e) {
+    clearTimeout(tid);
+    if (e.name === 'AbortError') throw new Error('หมดเวลาเชื่อมต่อ กรุณาลองใหม่');
+    throw e;
+  }
 }
 
 function showPage(id) {
