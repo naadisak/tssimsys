@@ -214,8 +214,15 @@ tr:hover td{background:#fafbfc}
     <h2>TQM SIM Management</h2>
     <p>เข้าสู่ระบบด้วย email ของคุณ</p>
     <div class="login-field">
-      <label>Email</label>
-      <input class="login-input" type="email" id="login-email" placeholder="yourname@tqm.co.th" autocomplete="email">
+      <label>รหัสพนักงาน</label>
+      <input class="login-input" type="text" id="login-empid" placeholder="เช่น 612388" autocomplete="username" inputmode="numeric">
+    </div>
+    <div class="login-field">
+      <label>รหัสผ่าน (6 หลัก)</label>
+      <input class="login-input" type="password" id="login-pin" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password">
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;text-align:left;background:#f7f8fa;border-radius:7px;padding:9px 12px">
+      เข้าใช้งานครั้งแรก ใช้<strong style="color:var(--teal)">รหัสพนักงาน</strong>เป็นรหัสผ่าน ระบบจะให้ตั้งรหัสใหม่ทันที
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
     <div class="login-error" id="login-error"></div>
@@ -224,6 +231,10 @@ tr:hover td{background:#fafbfc}
 
 <!-- ════ MAIN APP ════ -->
 <div id="page-app" class="page">
+  <div id="app-loading" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+    <div style="width:40px;height:40px;border:3px solid #b2ddd8;border-top-color:#0d7a6e;border-radius:50%;animation:spin .7s linear infinite"></div>
+    <div style="font-size:14px;color:#0d7a6e;font-weight:500" id="loading-msg">กำลังโหลด...</div>
+  </div>
 
   <!-- TOPBAR -->
   <div class="topbar">
@@ -386,6 +397,38 @@ tr:hover td{background:#fafbfc}
 </div>
 
 <!-- ── MODALS ── -->
+<!-- ── CHANGE PASSWORD MODAL ── -->
+<div class="modal-bg" id="modal-changepw">
+  <div class="modal">
+    <h3>ตั้งรหัสผ่านใหม่</h3>
+    <p id="changepw-msg">เข้าใช้งานครั้งแรก — กรุณาตั้งรหัสผ่านใหม่เป็นตัวเลข 6 หลัก</p>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px">รหัสผ่านเดิม (หรือรหัสพนักงาน ถ้าเพิ่งเข้าครั้งแรก)</div>
+        <input id="cp-old" type="password" maxlength="6" inputmode="numeric" placeholder="••••••"
+          style="width:100%;border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:14px;letter-spacing:4px;outline:none"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px">รหัสผ่านใหม่ (6 หลัก)</div>
+        <input id="cp-new" type="password" maxlength="6" inputmode="numeric" placeholder="••••••"
+          style="width:100%;border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:14px;letter-spacing:4px;outline:none"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px">ยืนยันรหัสผ่านใหม่</div>
+        <input id="cp-confirm" type="password" maxlength="6" inputmode="numeric" placeholder="••••••"
+          style="width:100%;border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:14px;letter-spacing:4px;outline:none"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div id="cp-error" style="display:none;background:var(--red-l);border:1px solid #ffb3aa;color:var(--red);border-radius:7px;padding:8px 12px;font-size:13px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-confirm" onclick="doChangePassword()">ตั้งรหัสผ่าน</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-submit">
   <div class="modal">
     <h3>ยืนยันการส่งข้อมูล</h3>
@@ -459,6 +502,15 @@ let SESSION = null; // { token, user }
 let S = {rows:[], colMap:{}, headers:[], mode:'', validated:false};
 
 // ════════ INIT ════════
+function showAppLoading(msg='กำลังโหลด...') {
+  const el = document.getElementById('app-loading');
+  if (el) { el.style.display='flex'; document.getElementById('loading-msg').textContent=msg; }
+}
+function hideAppLoading() {
+  const el = document.getElementById('app-loading');
+  if (el) el.style.display='none';
+}
+
 window.onload = () => {
   const saved = sessionStorage.getItem('tqm_session');
   if (saved) { SESSION = JSON.parse(saved); initApp(); }
@@ -490,18 +542,26 @@ function initPills() {
 
 // ════════ AUTH ════════
 async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  if (!email) return;
+  const emp_id = document.getElementById('login-empid').value.trim();
+  const pin    = document.getElementById('login-pin').value.trim();
+  if (!emp_id || !pin) { showLoginError('กรุณากรอกรหัสพนักงานและรหัสผ่าน'); return; }
   const btn = document.getElementById('btn-login');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>กำลังเข้าสู่ระบบ...';
   try {
-    const res = await fetch(`${GAS_URL}?action=login&email=${encodeURIComponent(email)}`);
+    const res = await fetch(`${GAS_URL}?action=login&emp_id=${encodeURIComponent(emp_id)}&pin=${encodeURIComponent(pin)}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error);
     SESSION = { token: data.token, user: data.user };
     sessionStorage.setItem('tqm_session', JSON.stringify(SESSION));
-    initApp();
+    if (data.must_change_pw) {
+      // Store temp session and show change pw modal
+      document.getElementById('modal-changepw').classList.add('on');
+      document.getElementById('cp-old').value = pin;
+      document.getElementById('page-login').classList.remove('active');
+    } else {
+      initApp();
+    }
   } catch(e) {
     showLoginError(e.message);
     btn.disabled = false;
@@ -509,15 +569,48 @@ async function doLogin() {
   }
 }
 
+async function doChangePassword() {
+  const old_pin = document.getElementById('cp-old').value.trim();
+  const new_pin = document.getElementById('cp-new').value.trim();
+  const confirm_pin = document.getElementById('cp-confirm').value.trim();
+  const errEl = document.getElementById('cp-error');
+  errEl.style.display = 'none';
+  if (!/^\d{6}$/.test(new_pin)) { errEl.textContent='รหัสผ่านใหม่ต้องเป็นตัวเลข 6 หลัก'; errEl.style.display=''; return; }
+  if (new_pin !== confirm_pin) { errEl.textContent='รหัสผ่านใหม่ไม่ตรงกัน'; errEl.style.display=''; return; }
+  try {
+    showAppLoading('กำลังบันทึกรหัสผ่าน...');
+    const res = await gasPost('change_password', { old_pin, new_pin });
+    hideAppLoading();
+    if (!res.ok) throw new Error(res.error);
+    document.getElementById('modal-changepw').classList.remove('on');
+    showToast('ตั้งรหัสผ่านใหม่เรียบร้อย ✓');
+    initApp();
+  } catch(e) {
+    hideAppLoading();
+    errEl.textContent = e.message;
+    errEl.style.display = '';
+  }
+}
+
 function doLogout() {
   sessionStorage.removeItem('tqm_session');
   SESSION = null;
   S = {rows:[], colMap:{}, headers:[], mode:'', validated:false};
+  document.getElementById('login-empid').value = '';
+  document.getElementById('login-pin').value = '';
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('btn-login').disabled = false;
+  document.getElementById('btn-login').textContent = 'เข้าสู่ระบบ';
   showPage('page-login');
 }
 
-document.getElementById('login-email').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-pin').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('login-empid').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('login-pin').focus();
+  });
 });
 
 function showLoginError(msg) {
@@ -536,13 +629,14 @@ function initApp() {
 
   if (u.role === 'admin') {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-    loadAdminData();
+    // Admin data loads lazily when tab is clicked
   }
   if (u.network) {
     const sel = document.getElementById('sel-net');
     sel.value = u.network;
     sel.disabled = true;
   }
+  // Run system window check in background (non-blocking)
   checkSystemWindow();
   updateInfo();
   setupPaste();
@@ -551,26 +645,25 @@ function initApp() {
 // ════════ SYSTEM WINDOW CHECK ════════
 async function checkSystemWindow() {
   try {
-    const data = await gasPost('get_settings', {});
-    if (!data.ok) return;
-    const s = data.settings;
-    const now = new Date();
-    const day = now.getDate();
-    const open = parseInt(s.submission_open_date || '1');
-    const close = parseInt(s.submission_close_date || '15');
-    const active = s.system_active === 'TRUE';
-    const isOpen = active && day >= open && day <= close;
+    const res = await fetch(`${GAS_URL}?action=system_status`);
+    const data = await res.json();
     const banner = document.getElementById('sys-banner');
     banner.style.display = 'flex';
-    if (isOpen) {
+    if (data.isOpen) {
       banner.className = 'sys-banner open';
-      banner.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>ระบบเปิดรับข้อมูลถึงวันที่ ${close} ของเดือนนี้`;
+      banner.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>ระบบเปิดรับข้อมูลถึงวันที่ ${data.close_day} ของเดือนนี้`;
     } else {
       banner.className = 'sys-banner closed';
-      banner.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>ระบบยังไม่เปิดให้ส่งข้อมูล (เปิดวันที่ ${open}–${close} ของทุกเดือน)`;
+      banner.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>ระบบยังไม่เปิดให้ส่งข้อมูล (เปิดวันที่ ${data.open_day}–${data.close_day} ของทุกเดือน)`;
       document.getElementById('pz').classList.add('disabled-zone');
     }
-  } catch(e) {}
+  } catch(e) {
+    // ถ้า error → assume open ไว้ก่อน
+    const banner = document.getElementById('sys-banner');
+    banner.style.display = 'flex';
+    banner.className = 'sys-banner open';
+    banner.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>ระบบพร้อมรับข้อมูล';
+  }
 }
 
 // ════════ TAB NAVIGATION ════════
@@ -582,7 +675,7 @@ function showTab(name) {
     btn.classList.toggle('active', ['submit','history','admin'][i] === name);
   });
   if (name === 'history') loadHistory();
-  if (name === 'admin')   loadAdminData();
+  if (name === 'admin' && SESSION?.user?.role === 'admin') loadAdminData();
 }
 
 // ════════ PASTE ════════
