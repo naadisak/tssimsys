@@ -212,7 +212,7 @@ tr:hover td{background:#fafbfc}
   <div class="login-card">
     <div class="login-logo">📱</div>
     <h2>TQM SIM Management</h2>
-    <p>เข้าสู่ระบบด้วย email ของคุณ</p>
+    <p>เข้าสู่ระบบด้วยรหัสพนักงาน + PIN 6 หลัก</p>
     <div class="login-field">
       <label>รหัสพนักงาน</label>
       <input class="login-input" type="text" id="login-empid" placeholder="เช่น 612388" autocomplete="username" inputmode="numeric">
@@ -225,6 +225,9 @@ tr:hover td{background:#fafbfc}
       เข้าใช้งานครั้งแรก ใช้<strong style="color:var(--teal)">รหัสพนักงาน</strong>เป็นรหัสผ่าน ระบบจะให้ตั้งรหัสใหม่ทันที
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div style="text-align:center;margin-top:12px">
+      <button onclick="testConnection()" style="background:none;border:none;color:var(--muted);font-family:var(--font);font-size:12px;cursor:pointer;text-decoration:underline">🔍 ทดสอบการเชื่อมต่อ GAS</button>
+    </div>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
@@ -547,16 +550,18 @@ async function doLogin() {
   if (!emp_id || !pin) { showLoginError('กรุณากรอกรหัสพนักงานและรหัสผ่าน'); return; }
   const btn = document.getElementById('btn-login');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>กำลังเข้าสู่ระบบ...';
+  let elapsed = 0;
+  const timerUI = setInterval(() => {
+    elapsed++;
+    btn.innerHTML = `<span class="spinner"></span>กำลังเข้าสู่ระบบ... (${elapsed}s)`;
+  }, 1000);
   try {
     const ctrl = new AbortController();
     const tid  = setTimeout(() => ctrl.abort(), 30000); // 30s timeout
-    const res  = await fetch(GAS_URL, {
-      method:  'POST',
-      signal:  ctrl.signal,
-      body:    JSON.stringify({ action: 'login', payload: { emp_id, pin } }),
-    });
+    const url  = `${GAS_URL}?action=login&emp_id=${encodeURIComponent(emp_id)}&pin=${encodeURIComponent(pin)}`;
+    const res  = await fetch(url, { signal: ctrl.signal });
     clearTimeout(tid);
+    clearInterval(timerUI);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error);
     SESSION = { token: data.token, user: data.user };
@@ -569,7 +574,8 @@ async function doLogin() {
       initApp();
     }
   } catch(e) {
-    const msg = e.name === 'AbortError' ? 'หมดเวลาเชื่อมต่อ กรุณาลองใหม่' : (e.message || 'เกิดข้อผิดพลาด');
+    clearInterval(timerUI);
+    const msg = e.name === 'AbortError' ? `หมดเวลา ${elapsed} วินาที — GAS อาจยังไม่ได้ deploy ใหม่` : (e.message || 'เกิดข้อผิดพลาด');
     showLoginError(msg);
     btn.disabled = false;
     btn.textContent = 'เข้าสู่ระบบ';
@@ -624,6 +630,27 @@ function showLoginError(msg) {
   const el = document.getElementById('login-error');
   el.textContent = msg;
   el.style.display = 'block';
+}
+
+async function testConnection() {
+  const el = document.getElementById('login-error');
+  el.style.display = 'block';
+  el.style.background = '#e8f5f3';
+  el.style.borderColor = '#0d7a6e';
+  el.style.color = '#0d7a6e';
+  el.textContent = 'กำลังทดสอบ...';
+  const start = Date.now();
+  try {
+    const res = await fetch(`${GAS_URL}?action=health`);
+    const data = await res.json();
+    const ms = Date.now() - start;
+    el.textContent = `✓ GAS ตอบสนองใน ${ms}ms — ${JSON.stringify(data)}`;
+  } catch(e) {
+    el.style.background = 'var(--red-l)';
+    el.style.borderColor = 'var(--red)';
+    el.style.color = 'var(--red)';
+    el.textContent = `✗ เชื่อมต่อไม่ได้: ${e.message}`;
+  }
 }
 
 // ════════ APP INIT ════════
