@@ -20,6 +20,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--text);font-si
 
 /* ── PAGE ROUTER ── */
 .page{display:none}.page.active{display:block}
+#page-login.active{display:flex}
 
 /* ── TOPBAR ── */
 .topbar{background:var(--navy);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
@@ -40,7 +41,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--text);font-si
 .wrap{max-width:1160px;margin:0 auto;padding:24px 18px}
 
 /* ── LOGIN PAGE ── */
-#page-login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--navy)}
+#page-login{align-items:center;justify-content:center;min-height:100vh;background:var(--navy)}
 .login-card{background:#fff;border-radius:16px;padding:48px 40px;width:400px;text-align:center}
 .login-logo{width:56px;height:56px;background:var(--teal);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px}
 .login-card h2{font-size:20px;font-weight:600;color:var(--navy);margin-bottom:6px}
@@ -207,7 +208,6 @@ tr:hover td{background:#fafbfc}
 </head>
 <body>
 
-<!-- ════ LOGIN PAGE ════ -->
 <div id="page-login" class="page active">
   <div class="login-card">
     <div class="login-logo">📱</div>
@@ -225,21 +225,17 @@ tr:hover td{background:#fafbfc}
       เข้าใช้งานครั้งแรก ใช้<strong style="color:var(--teal)">รหัสพนักงาน</strong>เป็นรหัสผ่าน ระบบจะให้ตั้งรหัสใหม่ทันที
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
-    <div style="text-align:center;margin-top:12px">
-      <button onclick="testConnection()" style="background:none;border:none;color:var(--muted);font-family:var(--font);font-size:12px;cursor:pointer;text-decoration:underline">🔍 ทดสอบการเชื่อมต่อ GAS</button>
-    </div>
+    
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
 
-<!-- ════ MAIN APP ════ -->
 <div id="page-app" class="page">
   <div id="app-loading" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px">
     <div style="width:40px;height:40px;border:3px solid #b2ddd8;border-top-color:#0d7a6e;border-radius:50%;animation:spin .7s linear infinite"></div>
     <div style="font-size:14px;color:#0d7a6e;font-weight:500" id="loading-msg">กำลังโหลด...</div>
   </div>
 
-  <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
       <h1>📱 TQM SIM</h1>
@@ -259,7 +255,6 @@ tr:hover td{background:#fafbfc}
     </div>
   </div>
 
-  <!-- ── TAB: ส่งข้อมูล ── -->
   <div id="tab-submit" class="wrap">
 
     <div class="sys-banner" id="sys-banner" style="display:none"></div>
@@ -337,7 +332,6 @@ tr:hover td{background:#fafbfc}
     </div>
   </div>
 
-  <!-- ── TAB: ประวัติ ── -->
   <div id="tab-history" class="wrap" style="display:none">
     <div class="section-card">
       <div class="section-head">
@@ -351,10 +345,8 @@ tr:hover td{background:#fafbfc}
     </div>
   </div>
 
-  <!-- ── TAB: Admin ── -->
   <div id="tab-admin" class="wrap" style="display:none">
 
-    <!-- Stats -->
     <div class="stat-grid" id="stat-grid">
       <div class="stat-card"><div class="num" id="st-total">—</div><div class="lbl">รายการทั้งหมด (เดือนนี้)</div></div>
       <div class="stat-card teal"><div class="num" id="st-submitted">—</div><div class="lbl">ส่งแล้ว</div></div>
@@ -362,7 +354,6 @@ tr:hover td{background:#fafbfc}
       <div class="stat-card red"><div class="num" id="st-issues">—</div><div class="lbl">มีปัญหา HR</div></div>
     </div>
 
-    <!-- ข้อมูล SIM รวม -->
     <div class="section-card">
       <div class="section-head">
         <h3>ข้อมูล SIM รวมทุกแผนก</h3>
@@ -378,7 +369,6 @@ tr:hover td{background:#fafbfc}
       </table></div>
     </div>
 
-    <!-- Users -->
     <div class="section-card">
       <div class="section-head">
         <h3>จัดการผู้ใช้งาน</h3>
@@ -390,7 +380,6 @@ tr:hover td{background:#fafbfc}
       </table></div>
     </div>
 
-    <!-- Settings -->
     <div class="section-card">
       <div class="section-head"><h3>Settings</h3><button class="btn-sm" onclick="saveSettings()">บันทึก</button></div>
       <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px" id="settings-form"></div>
@@ -399,8 +388,6 @@ tr:hover td{background:#fafbfc}
   </div>
 </div>
 
-<!-- ── MODALS ── -->
-<!-- ── CHANGE PASSWORD MODAL ── -->
 <div class="modal-bg" id="modal-changepw">
   <div class="modal">
     <h3>ตั้งรหัสผ่านใหม่</h3>
@@ -471,9 +458,6 @@ tr:hover td{background:#fafbfc}
 </div>
 
 <script>
-// ════════════════════════════════════════
-//  CONFIG — ใส่ GAS URL ตรงนี้
-// ════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyxWi2gsR9O6AKMxKAV10cYqklwZI7apT-gsEPv8gacPUHVbfevq4zhWVwMpQxau162tQ/exec';
 
 const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -500,11 +484,9 @@ const ALIASES = {
   remark:['remark','หมายเหตุ','note','สถานะ','status'],
 };
 
-// ── State ──
-let SESSION = null; // { token, user }
+let SESSION = null;
 let S = {rows:[], colMap:{}, headers:[], mode:'', validated:false};
 
-// ════════ INIT ════════
 function showAppLoading(msg='กำลังโหลด...') {
   const el = document.getElementById('app-loading');
   if (el) { el.style.display='flex'; document.getElementById('loading-msg').textContent=msg; }
@@ -543,40 +525,34 @@ function initPills() {
     FIXED.map((c,i) => `<span class="cp ${c.req?'r':'o'}"><span class="n">${i+1}</span>${c.label}</span>`).join(' ');
 }
 
-// ════════ AUTH ════════
 async function doLogin() {
   const emp_id = document.getElementById('login-empid').value.trim();
   const pin    = document.getElementById('login-pin').value.trim();
   if (!emp_id || !pin) { showLoginError('กรุณากรอกรหัสพนักงานและรหัสผ่าน'); return; }
+  
   const btn = document.getElementById('btn-login');
   btn.disabled = true;
-  let elapsed = 0;
-  const timerUI = setInterval(() => {
-    elapsed++;
-    btn.innerHTML = `<span class="spinner"></span>กำลังเข้าสู่ระบบ... (${elapsed}s)`;
-  }, 1000);
+  btn.innerHTML = `<span class="spinner"></span>กำลังเข้าสู่ระบบ...`;
+  document.getElementById('login-error').style.display = 'none';
+
   try {
-    const ctrl = new AbortController();
-    const tid  = setTimeout(() => ctrl.abort(), 30000); // 30s timeout
-    const url  = `${GAS_URL}?action=login&emp_id=${encodeURIComponent(emp_id)}&pin=${encodeURIComponent(pin)}`;
-    const res  = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(tid);
-    clearInterval(timerUI);
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error);
-    SESSION = { token: data.token, user: data.user };
+    const res = await gasPost('login', { emp_id: emp_id, pin: pin });
+    
+    if (!res.ok) throw new Error(res.error || 'ตรวจสอบรหัสพนักงานหรือรหัสผ่านอีกครั้ง');
+    
+    SESSION = { token: res.token, user: res.user };
     sessionStorage.setItem('tqm_session', JSON.stringify(SESSION));
-    if (data.must_change_pw) {
-      showPage('page-app'); // show app behind modal
+
+    if (res.must_change_pw) {
+      document.getElementById('page-login').classList.remove('active');
+      document.getElementById('page-app').classList.add('active');
       document.getElementById('modal-changepw').classList.add('on');
       document.getElementById('cp-old').value = pin;
     } else {
       initApp();
     }
   } catch(e) {
-    clearInterval(timerUI);
-    const msg = e.name === 'AbortError' ? `หมดเวลา ${elapsed} วินาที — GAS อาจยังไม่ได้ deploy ใหม่` : (e.message || 'เกิดข้อผิดพลาด');
-    showLoginError(msg);
+    showLoginError(e.message);
     btn.disabled = false;
     btn.textContent = 'เข้าสู่ระบบ';
   }
@@ -586,22 +562,30 @@ async function doChangePassword() {
   const old_pin = document.getElementById('cp-old').value.trim();
   const new_pin = document.getElementById('cp-new').value.trim();
   const confirm_pin = document.getElementById('cp-confirm').value.trim();
+  
   const errEl = document.getElementById('cp-error');
   errEl.style.display = 'none';
   if (!/^\d{6}$/.test(new_pin)) { errEl.textContent='รหัสผ่านใหม่ต้องเป็นตัวเลข 6 หลัก'; errEl.style.display=''; return; }
   if (new_pin !== confirm_pin) { errEl.textContent='รหัสผ่านใหม่ไม่ตรงกัน'; errEl.style.display=''; return; }
+  
+  const btn = document.querySelector('#modal-changepw .btn-confirm');
+  btn.innerHTML = `<span class="spinner"></span>กำลังบันทึก...`;
+  btn.disabled = true;
+
   try {
-    showAppLoading('กำลังบันทึกรหัสผ่าน...');
     const res = await gasPost('change_password', { old_pin, new_pin });
-    hideAppLoading();
     if (!res.ok) throw new Error(res.error);
+    
     document.getElementById('modal-changepw').classList.remove('on');
     showToast('ตั้งรหัสผ่านใหม่เรียบร้อย ✓');
+    
     initApp();
   } catch(e) {
-    hideAppLoading();
     errEl.textContent = e.message;
     errEl.style.display = '';
+  } finally {
+    btn.innerHTML = 'ตั้งรหัสผ่าน';
+    btn.disabled = false;
   }
 }
 
@@ -609,11 +593,13 @@ function doLogout() {
   sessionStorage.removeItem('tqm_session');
   SESSION = null;
   S = {rows:[], colMap:{}, headers:[], mode:'', validated:false};
+  
   document.getElementById('login-empid').value = '';
   document.getElementById('login-pin').value = '';
   document.getElementById('login-error').style.display = 'none';
   document.getElementById('btn-login').disabled = false;
   document.getElementById('btn-login').textContent = 'เข้าสู่ระบบ';
+  
   showPage('page-login');
 }
 
@@ -632,57 +618,45 @@ function showLoginError(msg) {
   el.style.display = 'block';
 }
 
-async function testConnection() {
-  const el = document.getElementById('login-error');
-  el.style.display = 'block';
-  el.style.background = '#e8f5f3';
-  el.style.borderColor = '#0d7a6e';
-  el.style.color = '#0d7a6e';
-  el.textContent = 'กำลังทดสอบ...';
-  const start = Date.now();
-  try {
-    const res = await fetch(`${GAS_URL}?action=health`);
-    const data = await res.json();
-    const ms = Date.now() - start;
-    el.textContent = `✓ GAS ตอบสนองใน ${ms}ms — ${JSON.stringify(data)}`;
-  } catch(e) {
-    el.style.background = 'var(--red-l)';
-    el.style.borderColor = 'var(--red)';
-    el.style.color = 'var(--red)';
-    el.textContent = `✗ เชื่อมต่อไม่ได้: ${e.message}`;
-  }
-}
-
-// ════════ APP INIT ════════
 function initApp() {
-  showPage('page-app');
-  const u = SESSION.user;
-  document.getElementById('tb-name').textContent = u.display_name;
-  document.getElementById('tb-avatar').textContent = u.display_name[0];
-  document.getElementById('tb-role').textContent = u.role === 'admin' ? 'ADMIN' : 'USER';
+  try {
+    if (!SESSION || !SESSION.user) {
+       doLogout();
+       return;
+    }
+    
+    showPage('page-app');
+    
+    const u = SESSION.user;
+    const dispName = u.display_name || u.emp_id || 'User';
+    document.getElementById('tb-name').textContent = dispName;
+    document.getElementById('tb-avatar').textContent = dispName.charAt(0) || 'U';
+    document.getElementById('tb-role').textContent = u.role === 'admin' ? 'ADMIN' : 'USER';
 
-  if (u.role === 'admin') {
-    document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-    // Admin data loads lazily when tab is clicked
+    if (u.role === 'admin') {
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+    }
+    if (u.network) {
+      const sel = document.getElementById('sel-net');
+      if(sel) { sel.value = u.network; sel.disabled = true; }
+    }
+    
+    updateInfo();
+    setupPaste();
+    checkSystemWindow(); 
+  } catch (e) {
+    console.error("initApp error:", e);
+    alert("โหลดหน้า Dashboard ไม่สำเร็จ: " + e.message);
   }
-  if (u.network) {
-    const sel = document.getElementById('sel-net');
-    sel.value = u.network;
-    sel.disabled = true;
-  }
-  // Run system window check in background (non-blocking)
-  checkSystemWindow();
-  updateInfo();
-  setupPaste();
 }
 
-// ════════ SYSTEM WINDOW CHECK ════════
 async function checkSystemWindow() {
   try {
     const res = await fetch(`${GAS_URL}?action=system_status`);
     const data = await res.json();
     const banner = document.getElementById('sys-banner');
     banner.style.display = 'flex';
+    
     if (data.isOpen) {
       banner.className = 'sys-banner open';
       banner.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>ระบบเปิดรับข้อมูลถึงวันที่ ${data.close_day} ของเดือนนี้`;
@@ -692,7 +666,6 @@ async function checkSystemWindow() {
       document.getElementById('pz').classList.add('disabled-zone');
     }
   } catch(e) {
-    // ถ้า error → assume open ไว้ก่อน
     const banner = document.getElementById('sys-banner');
     banner.style.display = 'flex';
     banner.className = 'sys-banner open';
@@ -700,7 +673,11 @@ async function checkSystemWindow() {
   }
 }
 
-// ════════ TAB NAVIGATION ════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
 function showTab(name) {
   ['submit','history','admin'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t === name ? '' : 'none';
@@ -712,7 +689,6 @@ function showTab(name) {
   if (name === 'admin' && SESSION?.user?.role === 'admin') loadAdminData();
 }
 
-// ════════ PASTE ════════
 function setupPaste() {
   const pz = document.getElementById('pz');
   const hp = document.getElementById('hp');
@@ -728,6 +704,7 @@ function isHeader(row) {
   if (/^\d{6,}$/.test(f)) return false;
   return row.some(c => { const cl=c.toLowerCase(); return Object.values(ALIASES).some(a=>a.some(x=>cl.includes(x))); });
 }
+
 function mapHeaders(hs) {
   const m={};const used=new Set();
   hs.forEach((h,i)=>{ const hl=h.toLowerCase(); for(const[k,a] of Object.entries(ALIASES)){if(!used.has(k)&&a.some(x=>hl.includes(x))){m[i]=k;used.add(k);break;}} });
@@ -780,7 +757,6 @@ function renderTable() {
     th.textContent=def?def.label:h; if(def?.req)th.classList.add('req');
     tr.appendChild(th);
   });
-  // HR status col
   const th2=document.createElement('th'); th2.textContent='HR'; tr.appendChild(th2);
   const th3=document.createElement('th'); th3.style.width='34px'; tr.appendChild(th3);
   thead.appendChild(tr);
@@ -802,13 +778,11 @@ function renderTable() {
       div.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();div.blur();}if(e.key==='Tab'){e.preventDefault();const all=[...document.querySelectorAll('.ec')];const idx=all.indexOf(div);if(idx>=0&&idx+1<all.length)all[idx+1].focus();}});
       td.appendChild(div); tr.appendChild(td);
     });
-    // HR badge
     const hrtd=document.createElement('td');
     const hrStatus=row._hr_status||'pending';
     const hrNote=row._hr_note||'';
     hrtd.innerHTML=`<div style="padding:6px 8px"><span class="hr-badge hr-${hrStatus}">${{matched:'✓ ตรง',mismatch:'⚠ ชื่อไม่ตรง',not_found:'✗ ไม่พบ',pending:'—'}[hrStatus]||hrStatus}</span>${hrNote?`<span class="sugg">${hrNote}</span>`:''}</div>`;
     tr.appendChild(hrtd);
-    // Delete btn
     const dtd=document.createElement('td'); dtd.className='dtd';
     const db=document.createElement('button'); db.className='db'; db.title='ลบแถวนี้';
     db.innerHTML='<svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
@@ -831,6 +805,7 @@ function validate() {
   let emp=0;
   S.rows.forEach(row=>{FIXED.filter(c=>c.req).forEach(col=>{const idx=+Object.keys(S.colMap).find(i=>S.colMap[i]===col.key);if(!isNaN(idx)&&!(row[idx]||'').trim())emp++;});});
   if(emp) issues.push(`มีช่องสำคัญว่าง ${emp} ช่อง`);
+  
   if(!issues.length){
     bar.classList.add('ok');vm.textContent='รูปแบบข้อมูลถูกต้อง กดปุ่ม "ตรวจสอบ HR" ก่อนส่ง';
     vi.innerHTML='<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
@@ -842,7 +817,6 @@ function validate() {
   }
 }
 
-// ════════ HR VALIDATE (call GAS) ════════
 async function runValidate() {
   if(!S.rows.length) return;
   const btn=document.getElementById('btn-val');
@@ -858,12 +832,13 @@ async function runValidate() {
   try {
     const res = await gasPost('validate_hr', {rows});
     if(!res.ok) throw new Error(res.error);
-
+    
     res.results.forEach((r,i)=>{
       S.rows[i]._hr_status = r.hr_status;
       S.rows[i]._hr_note   = r.hr_note||'';
       S.rows[i]._hr_suggestion = r.hr_suggestion;
     });
+    
     S.validated = true;
 
     const blocked = res.results.filter(r=>r.hr_status==='not_found').length;
@@ -871,7 +846,8 @@ async function runValidate() {
     const matched  = res.results.filter(r=>r.hr_status==='matched').length;
 
     renderTable();
-    const bar=document.getElementById('vb'); bar.className='vb on';
+    const bar=document.getElementById('vb');
+    bar.className='vb on';
     const vm=document.getElementById('vm'); const vi=document.getElementById('vi');
     document.getElementById('viss').innerHTML='';
 
@@ -899,7 +875,6 @@ async function runValidate() {
   }
 }
 
-// ════════ SUBMIT ════════
 function openSubmitModal() {
   const net=document.getElementById('sel-net').value;
   const month=document.getElementById('sel-month').value;
@@ -930,8 +905,8 @@ async function doSubmit() {
       network: document.getElementById('sel-net').value,
       rows,
     });
+    
     if(!res.ok && res.duplicate){
-      // Re-confirm
       if(confirm(`คุณส่งข้อมูลนี้ไปแล้ว ต้องการส่งใหม่ (แทนที่ข้อมูลเดิม) หรือไม่?`)){
         const res2 = await gasPost('submit_sim', {
           month: document.getElementById('sel-month').value,
@@ -944,6 +919,7 @@ async function doSubmit() {
       }
       return;
     }
+    
     if(!res.ok) throw new Error(res.error);
     showToast(`ส่งข้อมูล ${res.written} รายการ เรียบร้อย ✓`);
     clearData();
@@ -966,7 +942,6 @@ function clearData() {
   document.getElementById('btn-sub').disabled=true;
 }
 
-// ════════ HISTORY ════════
 async function loadHistory() {
   const tbody=document.getElementById('hist-body');
   tbody.innerHTML='<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted)">กำลังโหลด...</td></tr>';
@@ -974,7 +949,7 @@ async function loadHistory() {
     const res=await gasPost('get_sim_data',{});
     if(!res.ok) throw new Error(res.error);
     if(!res.rows.length){tbody.innerHTML='<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted)">ยังไม่มีข้อมูล</td></tr>';return;}
-    // Group by month+network
+    
     const groups={};
     res.rows.forEach(r=>{
       const k=`${r.month}|${r.network}`;
@@ -982,6 +957,7 @@ async function loadHistory() {
       groups[k].count++;
       if(r.last_edited_at>groups[k].last_edited) groups[k].last_edited=r.last_edited_at;
     });
+    
     tbody.innerHTML=Object.values(groups).sort((a,b)=>b.month.localeCompare(a.month)).map(g=>`
       <tr>
         <td>${thaiMonthFromYYYYMM(g.month)}</td>
@@ -994,7 +970,6 @@ async function loadHistory() {
   } catch(e) { showToast(e.message,true); }
 }
 
-// ════════ ADMIN ════════
 async function loadAdminData() {
   loadAdminSim();
   loadUsers();
@@ -1005,9 +980,11 @@ async function loadAdminSim() {
   const month=document.getElementById('adm-month').value;
   const tbody=document.getElementById('adm-sim-body');
   tbody.innerHTML='<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--muted)">กำลังโหลด...</td></tr>';
+  
   try {
     const res=await gasPost('get_sim_data',{month});
     if(!res.ok) throw new Error(res.error);
+    
     document.getElementById('st-total').textContent=res.total;
     const sub=res.rows.filter(r=>r.status==='submitted').length;
     const mat=res.rows.filter(r=>r.hr_status==='matched').length;
@@ -1015,7 +992,9 @@ async function loadAdminSim() {
     document.getElementById('st-submitted').textContent=sub;
     document.getElementById('st-matched').textContent=mat;
     document.getElementById('st-issues').textContent=iss;
+    
     if(!res.rows.length){tbody.innerHTML='<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--muted)">ไม่มีข้อมูล</td></tr>';return;}
+    
     tbody.innerHTML=res.rows.map(r=>`
       <tr>
         <td style="font-family:var(--mono);color:var(--teal)">${r.phone}</td>
@@ -1035,8 +1014,9 @@ function exportCSV() {
   const table=document.getElementById('adm-sim-body');
   const rows=[...table.querySelectorAll('tr')];
   if(!rows.length) return;
+  
   const csv=rows.map(r=>[...r.querySelectorAll('td')].map(td=>'"'+td.textContent.trim()+'"').join(',')).join('\n');
-  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`SIM_${document.getElementById('adm-month').value}.csv`;
@@ -1048,6 +1028,7 @@ async function loadUsers() {
   try {
     const res=await gasPost('get_users',{});
     if(!res.ok) throw new Error(res.error);
+    
     tbody.innerHTML=res.users.map(u=>`
       <tr>
         <td>${u.email}</td>
@@ -1056,9 +1037,23 @@ async function loadUsers() {
         <td>${u.network||'—'}</td>
         <td>${u.department||'—'}</td>
         <td><span class="status-pill ${u.is_active==='TRUE'?'pill-active':'pill-inactive'}">${u.is_active==='TRUE'?'ใช้งาน':'ปิด'}</span></td>
-        <td><button class="btn-sm gray" onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})">แก้ไข</button></td>
+        <td style="white-space:nowrap">
+          <button class="btn-sm gray" onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})">แก้ไข</button>
+          <button class="btn-sm red" style="margin-left:4px" onclick="resetUserPassword('${u.user_id}', '${u.display_name}')">Reset PW</button>
+        </td>
       </tr>`).join('');
   } catch(e) { showToast(e.message,true); }
+}
+
+async function resetUserPassword(user_id, name) {
+  if (!confirm(`ยืนยันการรีเซ็ตรหัสผ่านของ "${name}" ใช่หรือไม่?\n(เมื่อรีเซ็ตแล้ว ระบบจะให้ใช้รหัสพนักงานล็อกอินเพื่อตั้งรหัสใหม่)`)) return;
+  try {
+    const res = await gasPost('reset_user_password', { user_id });
+    if (!res.ok) throw new Error(res.error);
+    showToast(`รีเซ็ตรหัสผ่านของ ${name} เรียบร้อย ✓`);
+  } catch(e) {
+    showToast(e.message, true);
+  }
 }
 
 let _settings={};
@@ -1067,6 +1062,7 @@ async function loadSettingsForm() {
     const res=await gasPost('get_settings',{});
     if(!res.ok) return;
     _settings=res.settings;
+    
     const form=document.getElementById('settings-form');
     const fields=[
       {k:'submission_open_date',  label:'วันที่เปิดรับ (ของทุกเดือน)',  type:'number'},
@@ -1078,6 +1074,7 @@ async function loadSettingsForm() {
       {k:'notify_before_close',   label:'แจ้งเตือนก่อนปิด (วัน)',       type:'number'},
       {k:'hr_strict_mode',        label:'HR strict mode (TRUE/FALSE)',  type:'text'},
     ];
+    
     form.innerHTML=fields.map(f=>`
       <div>
         <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">${f.label}</div>
@@ -1092,6 +1089,7 @@ async function saveSettings() {
   const keys=['submission_open_date','submission_close_date','system_active','notify_email_1','notify_email_2','notify_email_3','notify_before_close','hr_strict_mode'];
   const payload={};
   keys.forEach(k=>{ const el=document.getElementById('s_'+k); if(el) payload[k]=el.value; });
+  
   try {
     const res=await gasPost('save_settings',payload);
     if(!res.ok) throw new Error(res.error);
@@ -1100,12 +1098,12 @@ async function saveSettings() {
   } catch(e) { showToast(e.message,true); }
 }
 
-// ── User modal ──
 let _editUser=null;
 function openUserModal(user=null) {
   _editUser=user;
   document.getElementById('modal-user-title').textContent=user?'แก้ไข user':'เพิ่ม user';
   const form=document.getElementById('modal-user-form');
+  
   const fields=[
     {k:'email',        label:'Email',        type:'email', val:user?.email||''},
     {k:'display_name', label:'ชื่อที่แสดง',  type:'text',  val:user?.display_name||''},
@@ -1114,12 +1112,14 @@ function openUserModal(user=null) {
     {k:'department',   label:'แผนก',         type:'text',  val:user?.department||''},
     {k:'is_active',    label:'สถานะ',        type:'select',opts:['TRUE','FALSE'], val:user?.is_active||'TRUE'},
   ];
+  
   form.innerHTML=fields.map(f=>{
     const ipt = f.type==='select'
       ? `<select id="uf_${f.k}" style="width:100%;border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-family:var(--font);font-size:13px">${f.opts.map(o=>`<option value="${o}" ${o===f.val?'selected':''}>${o||'—'}</option>`).join('')}</select>`
       : `<input id="uf_${f.k}" type="${f.type}" value="${f.val}" style="width:100%;border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-family:var(--font);font-size:13px">`;
     return `<div><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px">${f.label}</div>${ipt}</div>`;
   }).join('');
+  
   document.getElementById('modal-user').classList.add('on');
 }
 
@@ -1128,6 +1128,7 @@ async function saveUser() {
   const payload={};
   keys.forEach(k=>{ const el=document.getElementById('uf_'+k); if(el) payload[k]=el.value; });
   if(_editUser) payload.user_id=_editUser.user_id;
+  
   try {
     const res=await gasPost('save_user',payload);
     if(!res.ok) throw new Error(res.error);
@@ -1137,7 +1138,6 @@ async function saveUser() {
   } catch(e) { showToast(e.message,true); }
 }
 
-// ── Archive ──
 function openArchiveModal() {
   const month=document.getElementById('adm-month').value;
   document.getElementById('modal-archive-msg').textContent=`Archive ข้อมูลเดือน ${thaiMonthFromYYYYMM(month)} ทั้งหมด — ข้อมูลจะถูกย้ายไป sheet archive และล้าง sim_data ให้ว่าง ยืนยันหรือไม่?`;
@@ -1154,10 +1154,10 @@ async function doArchive() {
   } catch(e) { showToast(e.message,true); }
 }
 
-// ════════ HELPERS ════════
 async function gasPost(action, payload) {
   const ctrl = new AbortController();
   const tid  = setTimeout(() => ctrl.abort(), 30000);
+  
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
@@ -1171,11 +1171,6 @@ async function gasPost(action, payload) {
     if (e.name === 'AbortError') throw new Error('หมดเวลาเชื่อมต่อ กรุณาลองใหม่');
     throw e;
   }
-}
-
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('on'); }
