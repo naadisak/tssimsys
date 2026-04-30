@@ -542,8 +542,11 @@ tr:hover td { background: #f8fafc; }
 <div class="modal-bg" id="modal-changepw" onclick="if(event.target===this) closeModal('modal-changepw')">
   <div class="modal">
     <h3>ตั้งรหัสผ่านใหม่</h3><p>เข้าใช้งานครั้งแรก — กรุณาตั้งรหัสผ่านใหม่เป็นตัวเลข 6 หลัก</p>
+    <div style="background:var(--blue-l);border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--blue);margin-bottom:12px">
+      💡 <strong>รหัสผ่านเดิม</strong> = รหัสพนักงานของคุณ (ใช้สำหรับเข้าครั้งแรก)
+    </div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
-      <input id="cp-old" type="password" maxlength="6" inputmode="numeric" placeholder="รหัสผ่านเดิม" class="login-input" style="letter-spacing:4px;text-align:center">
+      <input id="cp-old" type="password" maxlength="20" inputmode="numeric" placeholder="รหัสผ่านเดิม (รหัสพนักงาน)" class="login-input" style="letter-spacing:4px;text-align:center">
       <input id="cp-new" type="password" maxlength="6" inputmode="numeric" placeholder="รหัสผ่านใหม่ (6 หลัก)" class="login-input" style="letter-spacing:4px;text-align:center">
       <input id="cp-confirm" type="password" maxlength="6" inputmode="numeric" placeholder="ยืนยันรหัสผ่านใหม่" class="login-input" style="letter-spacing:4px;text-align:center">
       <div id="cp-error" style="display:none;color:var(--red);font-size:13px;text-align:center;padding:8px;background:var(--red-l);border-radius:6px;"></div>
@@ -736,13 +739,48 @@ async function doLogin() {
     SESSION = { token: res.token, user: res.user };
     sessionStorage.setItem('tqm_session', JSON.stringify(SESSION));
     if (res.must_change_pw) {
-      document.getElementById('page-login').classList.remove('active'); document.getElementById('page-app').classList.add('active');
-      document.getElementById('modal-changepw').classList.add('on');
+      initApp();
+      setTimeout(() => document.getElementById('modal-changepw').classList.add('on'), 100);
     } else { initApp(); }
   } catch(e) { document.getElementById('login-error').textContent=e.message; document.getElementById('login-error').style.display='block'; btn.disabled=false; btn.textContent='เข้าสู่ระบบ'; }
 }
 
 function doLogout() { sessionStorage.removeItem('tqm_session'); SESSION = null; showPage('page-login'); }
+
+// ─── CHANGE PASSWORD ────────────────────────────────────────────────────────
+async function doChangePassword() {
+  const oldVal     = document.getElementById('cp-old').value.trim();
+  const newVal     = document.getElementById('cp-new').value.trim();
+  const confirmVal = document.getElementById('cp-confirm').value.trim();
+  const errEl      = document.getElementById('cp-error');
+
+  const showErr = (msg) => { errEl.textContent = msg; errEl.style.display = 'block'; };
+  errEl.style.display = 'none';
+
+  if (!oldVal || !newVal || !confirmVal) return showErr('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+  if (!/^\d{6}$/.test(newVal))           return showErr('รหัสผ่านใหม่ต้องเป็นตัวเลข 6 หลักเท่านั้น');
+  if (newVal !== confirmVal)             return showErr('รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
+  if (newVal === oldVal)                 return showErr('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม');
+
+  const btn = document.querySelector('#modal-changepw .btn-confirm');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+  try {
+    // ส่ง plain text ตรงๆ — GAS เก็บ pin เป็น plain text เหมือนกัน
+    const res = await gasPost('change_password', { old_pin: oldVal, new_pin: newVal });
+    if (!res.ok) throw new Error(res.error || 'รหัสผ่านเดิมไม่ถูกต้อง');
+
+    showToast('เปลี่ยนรหัสผ่านสำเร็จ ✓');
+    closeModal('modal-changepw');
+    ['cp-old','cp-new','cp-confirm'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) {
+    showErr(e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่าน';
+  }
+}
+
+
 
 function initApp() {
   if (!SESSION || !SESSION.user) { doLogout(); return; }
@@ -764,9 +802,11 @@ async function checkSystemWindow() {
       banner.className = 'sys-banner open'; banner.innerHTML = `✅ ระบบเปิดรับข้อมูลถึงวันที่ ${data.close_day} ของเดือนนี้`;
     } else {
       banner.className = 'sys-banner closed'; banner.innerHTML = `❌ ระบบยังไม่เปิดให้ส่งข้อมูล (เปิดวันที่ ${data.open_day}–${data.close_day})`;
-      document.getElementById('pz').classList.add('disabled-zone');
+      // ไม่ disable paste zone — GAS จะ reject เองถ้าระบบปิด ป้องกันกรณี settings ยังไม่ได้ตั้งค่า
     }
-  } catch(e) {}
+  } catch(e) {
+    // network error หรือ GAS ไม่ตอบ → ไม่ต้อง block การใช้งาน
+  }
 }
 
 function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -817,11 +857,43 @@ function thaiMonthFromYYYYMM(yyyymm) {
 function setupPaste() { 
   const pz = document.getElementById('pz'); const hp = document.getElementById('hp'); 
   pz.addEventListener('dragover', e => e.preventDefault()); 
-  document.addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey) && e.key==='v') hp.focus(); }); 
   hp.addEventListener('paste', e => { e.preventDefault(); processData(e.clipboardData.getData('text/plain')); }); 
   hp.addEventListener('focus', () => pz.classList.add('focused'));
   hp.addEventListener('blur', () => pz.classList.remove('focused'));
 }
+
+// ─── GLOBAL KEYDOWN: Enter = submit modal / Ctrl+V = paste ──────────────────
+document.addEventListener('keydown', e => {
+  // Ctrl+V / Cmd+V → focus textarea เพื่อรับ paste
+  if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+    const appPage = document.getElementById('page-app');
+    if (appPage && appPage.classList.contains('active')) {
+      document.getElementById('hp').focus();
+    }
+    return;
+  }
+  // Enter → ปุ่ม confirm ของ modal ที่เปิดอยู่
+  if (e.key === 'Enter') {
+    // ถ้า focus อยู่ที่ input/textarea/select ใน modal ให้ผ่าน (ยกเว้น modal-changepw ที่จงใจรับ Enter)
+    const tag = document.activeElement ? document.activeElement.tagName : '';
+    // login page
+    if (document.getElementById('page-login').classList.contains('active')) {
+      if (tag === 'INPUT') { e.preventDefault(); doLogin(); }
+      return;
+    }
+    // modal-changepw — Enter บันทึก
+    const cpModal = document.getElementById('modal-changepw');
+    if (cpModal && cpModal.classList.contains('on')) {
+      if (tag === 'INPUT') { e.preventDefault(); doChangePassword(); }
+      return;
+    }
+    // modal-submit — Enter ยืนยัน
+    const subModal = document.getElementById('modal-submit');
+    if (subModal && subModal.classList.contains('on')) {
+      e.preventDefault(); doSubmit(); return;
+    }
+  }
+});
 function focusPaste() { document.getElementById('hp').focus(); }
 function isHeader(row) { const f = (row[0]||'').replace(/[-\s]/g,''); if (/^\d{6,}$/.test(f)) return false; return row.some(c => { const cl=c.toLowerCase(); return Object.values(ALIASES).some(a=>a.some(x=>cl.includes(x))); }); }
 function mapHeaders(hs) { const m={};const used=new Set(); hs.forEach((h,i)=>{ const hl=h.toLowerCase(); for(const[k,a] of Object.entries(ALIASES)){if(!used.has(k)&&a.some(x=>hl.includes(x))){m[i]=k;used.add(k);break;}} }); return m; }
