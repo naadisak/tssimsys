@@ -76,6 +76,7 @@ body{font-family:var(--font);background:var(--main-bg);color:var(--text);font-si
 .field { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
 .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .field select { width: 100%; border: none; outline: none; font-family: var(--font); font-size: 14px; color: var(--text); background: transparent; font-weight: 500; cursor: pointer; }
+.field select.required-error { border: 1px solid var(--red); background: var(--red-l); border-radius: 4px; padding: 4px; }
 
 /* BADGES โครงสร้างตาราง */
 .cols-bar { background: #fff; border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
@@ -90,7 +91,7 @@ body{font-family:var(--font);background:var(--main-bg);color:var(--text);font-si
 .pz { background: var(--white); border: 2px dashed #cbd5e1; border-radius: var(--r); padding: 40px; text-align: center; margin-bottom: 24px; cursor: pointer; transition: all .2s ease; position: relative; overflow: hidden; }
 .pz:hover { border-color: var(--blue); background: #f8fafc; }
 .pz.filled { border: 1px solid var(--border); background: var(--white); text-align: left; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-.pz.disabled-zone { border-color: var(--border); background: #f1f5f9; pointer-events: none; opacity: 0.7; }
+.pz.disabled-zone { border-color: var(--border); background: #f1f5f9; cursor: not-allowed; opacity: 0.7; }
 .pi { width: 48px; height: 48px; margin: 0 auto 16px; background: var(--teal-l); color: var(--teal); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
 .pt { font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
 .ps { font-size: 13.5px; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -328,16 +329,16 @@ tr:hover td { background: #f8fafc; }
       <div class="sys-banner" id="sys-banner" style="display:none"></div>
       
       <div class="meta-row">
-        <div class="field"><label>เครือข่าย</label><select id="sel-net" onchange="updateInfo()"><option value="">— เลือกเครือข่าย —</option><option value="AIS">AIS</option><option value="TRUE">TRUE</option><option value="TRUE_RECEIVE">TRUE รับสายอย่างเดียว</option></select></div>
+        <div class="field"><label>เครือข่าย <span style="color:var(--red)">*</span></label><select id="sel-net" onchange="checkPasteEnable()"><option value="">— กรุณาเลือกเครือข่าย —</option><option value="AIS">AIS</option><option value="TRUE">TRUE</option><option value="TRUE_RECEIVE">TRUE รับสายอย่างเดียว</option></select></div>
         <div class="field"><label>เดือนที่ส่งข้อมูล</label><select id="sel-month" onchange="updateInfo()"></select></div>
       </div>
       
-      <div class="cols-bar"><span class="cols-lbl">โครงสร้างคอลัมน์ (Excel A-I)</span><span id="pills"></span></div>
+      <div class="cols-bar"><span class="cols-lbl">โครงสร้างคอลัมน์ (ตามลำดับ)</span><span id="pills"></span></div>
       
-      <div class="pz" id="pz" onclick="focusPaste()">
+      <div class="pz disabled-zone" id="pz" onclick="focusPaste()">
         <div id="idle-view">
           <div class="pi"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg></div>
-          <div class="pt">วางข้อมูลจาก Excel ลงที่นี่</div>
+          <div class="pt" id="pz-title">กรุณาเลือกเครือข่ายก่อนวางข้อมูล</div>
           <div class="ps">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             มีหัวตารางหรือไม่ก็ได้ ระบบจะจับคู่อัตโนมัติ
@@ -347,10 +348,10 @@ tr:hover td { background: #f8fafc; }
           <div class="mock-data">
             <div style="font-size:11px; margin-bottom:8px; font-weight:600; color:var(--navy); opacity:0.8">📝 ตัวอย่างการจัดเรียงข้อมูลก่อนวาง (จาก Excel)</div>
             <table class="mock-table">
-              <thead><tr><th>เบอร์โทรศัพท์</th><th>รหัสพนักงาน</th><th>ชื่อ</th><th>นามสกุล</th><th>ตำแหน่ง</th><th>รหัสหน่วยงาน</th><th>ชื่อหน่วยงาน</th><th>Package</th><th>Remark</th></tr></thead>
+              <thead><tr><th>เบอร์โทรศัพท์</th><th>รหัสพนักงาน</th><th>ชื่อ</th><th>นามสกุล</th><th>ตำแหน่ง</th></tr></thead>
               <tbody>
-                <tr><td>0891234567</td><td>550123</td><td>สมชาย</td><td>รักดี</td><td>เจ้าหน้าที่</td><td>IT01</td><td>ไอที</td><td>Pro 599</td><td>เปิดใหม่</td></tr>
-                <tr><td>0819876543</td><td>550124</td><td>สมหญิง</td><td>ใจงาม</td><td>หัวหน้างาน</td><td>IT01</td><td>ไอที</td><td>Max 899</td><td>-</td></tr>
+                <tr><td>0891234567</td><td>550123</td><td>สมชาย</td><td>รักดี</td><td>เจ้าหน้าที่</td></tr>
+                <tr><td>0819876543</td><td>550124</td><td>สมหญิง</td><td>ใจงาม</td><td>หัวหน้างาน</td></tr>
               </tbody>
             </table>
           </div>
@@ -415,8 +416,8 @@ tr:hover td { background: #f8fafc; }
 
         <div style="width:100%;overflow-x:auto;">
             <table class="admin-table">
-            <thead><tr><th>เครือข่าย</th><th>เบอร์โทร</th><th>รหัสพนักงาน</th><th>ชื่อ-สกุล</th><th>สถานะ</th><th>หมายเหตุ / สาเหตุ</th></tr></thead>
-            <tbody id="hist-body"><tr><td colspan="6" style="padding:40px;text-align:center;color:var(--muted)"><div class="spinner" style="border-color:var(--border);border-top-color:var(--muted)"></div> กำลังดึงข้อมูล...</td></tr></tbody>
+            <thead><tr><th>เครือข่าย</th><th>เบอร์โทร</th><th>รหัสพนักงาน</th><th>ชื่อ-สกุล</th><th>รหัสหน่วยงาน</th><th>ชื่อหน่วยงาน</th><th>สถานะ</th><th>หมายเหตุ / สาเหตุ</th></tr></thead>
+            <tbody id="hist-body"><tr><td colspan="8" style="padding:40px;text-align:center;color:var(--muted)"><div class="spinner" style="border-color:var(--border);border-top-color:var(--muted)"></div> กำลังดึงข้อมูล...</td></tr></tbody>
             </table>
         </div>
       </div>
@@ -441,7 +442,7 @@ tr:hover td { background: #f8fafc; }
         </div>
         <div style="width:100%;overflow-x:auto;">
           <table class="admin-table">
-            <thead><tr><th>เครือข่าย</th><th>เบอร์โทร</th><th>รหัสพนักงาน</th><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>หน่วยงาน</th><th>Package</th><th>สถานะ HR</th><th>ผู้ส่ง</th></tr></thead>
+            <thead><tr><th>เครือข่าย</th><th>เบอร์โทร</th><th>รหัสพนักงาน</th><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>รหัสหน่วยงาน</th><th>ชื่อหน่วยงาน</th><th>สถานะ HR</th><th>ผู้ส่ง</th></tr></thead>
             <tbody id="adm-sim-body"><tr><td colspan="9" style="padding:40px;text-align:center;color:var(--muted)">เลือกเดือนเพื่อดูข้อมูล</td></tr></tbody>
           </table>
         </div>
@@ -670,18 +671,6 @@ tr:hover td { background: #f8fafc; }
   </div>
 </div>
 
-<div class="modal-bg" id="modal-sync-hr" onclick="if(event.target===this) cancelSyncHR()">
-  <div class="modal" style="width:460px">
-     <h3>พบข้อมูลไม่ตรงกับ HR</h3>
-     <p id="sync-hr-msg" style="color:var(--amber);font-size:14px;font-weight:600;margin-bottom:12px;"></p>
-     <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">ระบบจะทำการดึงข้อมูล <strong style="color:var(--navy)">ตำแหน่ง, รหัสหน่วยงาน, และชื่อหน่วยงาน</strong> จากฐานข้อมูล HR มาแทนที่ในตารางของคุณโดยอัตโนมัติ คุณต้องการดำเนินการหรือไม่?</p>
-     <div class="modal-btns">
-        <button class="btn-cancel" onclick="cancelSyncHR()">ข้ามไปก่อน</button>
-        <button class="btn-confirm" onclick="doSyncHR()">อัปเดตตาม HR</button>
-     </div>
-  </div>
-</div>
-
 <div class="toast" id="toast">
   <span id="toast-msg"></span>
 </div>
@@ -689,23 +678,31 @@ tr:hover td { background: #f8fafc; }
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyxWi2gsR9O6AKMxKAV10cYqklwZI7apT-gsEPv8gacPUHVbfevq4zhWVwMpQxau162tQ/exec';
 const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+// 💡 ปรับลดโครงสร้างที่ต้องการตอน Paste เหลือแค่ 5 คอลัมน์
 const FIXED = [
-  {key:'phone', label:'เบอร์โทรศัพท์', req:true}, {key:'emp_id', label:'รหัสพนักงาน', req:true},
-  {key:'first_name',label:'ชื่อ', req:true}, {key:'last_name', label:'นามสกุล', req:true},
-  {key:'position', label:'ตำแหน่ง', req:true}, {key:'dept_code', label:'รหัสหน่วยงาน', req:true},
-  {key:'dept_name', label:'ชื่อหน่วยงาน', req:true}, {key:'package', label:'Package', req:true},
-  {key:'remark', label:'Remark', req:false}
+  {key:'phone', label:'เบอร์โทรศัพท์', req:true}, 
+  {key:'emp_id', label:'รหัสพนักงาน', req:true},
+  {key:'first_name',label:'ชื่อ', req:false}, 
+  {key:'last_name', label:'นามสกุล', req:false},
+  {key:'position', label:'ตำแหน่ง', req:false}
 ];
+
 const ALIASES = {
   phone:['เบอร์','phone','tel','หมายเลข','ซิม'], emp_id:['รหัสพนักงาน','รหัส','emp','employee'],
   first_name:['ชื่อ','firstname'], last_name:['นามสกุล','สกุล','lastname','surname'],
-  position:['ตำแหน่ง','position'], dept_code:['รหัสหน่วยงาน','รหัสหน่วย','deptcode'],
-  dept_name:['ชื่อหน่วยงาน','หน่วยงาน','ฝ่าย','สังกัด'], package:['package','แพ็กเกจ','โปร','plan'],
-  remark:['remark','หมายเหตุ','note','สถานะ','status']
+  position:['ตำแหน่ง','position']
 };
 
 let SESSION = null; 
 let S = {rows:[], colMap:{}, headers:[], mode:'', validated:false};
+
+// 💡 หัวตารางแบบเต็มที่จะแสดงผลหลังโหลดข้อมูลจาก HR
+const FULL_HEADERS = [
+    {key:'phone', label:'เบอร์โทรศัพท์'}, {key:'emp_id', label:'รหัสพนักงาน'},
+    {key:'first_name', label:'ชื่อ'}, {key:'last_name', label:'นามสกุล'},
+    {key:'position', label:'ตำแหน่ง'}, {key:'dept_code', label:'รหัสหน่วยงาน'}, {key:'dept_name', label:'ชื่อหน่วยงาน'}
+];
 
 window.onload = () => {
   const saved = sessionStorage.getItem('tqm_session');
@@ -766,7 +763,6 @@ async function doChangePassword() {
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
 
   try {
-    // ส่ง plain text ตรงๆ — GAS เก็บ pin เป็น plain text เหมือนกัน
     const res = await gasPost('change_password', { old_pin: oldVal, new_pin: newVal });
     if (!res.ok) throw new Error(res.error || 'รหัสผ่านเดิมไม่ถูกต้อง');
 
@@ -780,8 +776,6 @@ async function doChangePassword() {
   }
 }
 
-
-
 function initApp() {
   if (!SESSION || !SESSION.user) { doLogout(); return; }
   showPage('page-app');
@@ -791,7 +785,11 @@ function initApp() {
   document.getElementById('tb-role').textContent = u.role === 'admin' ? 'Administrator' : 'User';
   if (u.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
   if (u.network) { const sel = document.getElementById('sel-net'); if(sel) { sel.value = u.network; sel.disabled = true; } }
-  updateInfo(); setupPaste(); checkSystemWindow();
+  
+  updateInfo(); 
+  setupPaste(); 
+  checkPasteEnable();
+  checkSystemWindow();
 }
 
 async function checkSystemWindow() {
@@ -802,11 +800,8 @@ async function checkSystemWindow() {
       banner.className = 'sys-banner open'; banner.innerHTML = `✅ ระบบเปิดรับข้อมูลถึงวันที่ ${data.close_day} ของเดือนนี้`;
     } else {
       banner.className = 'sys-banner closed'; banner.innerHTML = `❌ ระบบยังไม่เปิดให้ส่งข้อมูล (เปิดวันที่ ${data.open_day}–${data.close_day})`;
-      // ไม่ disable paste zone — GAS จะ reject เองถ้าระบบปิด ป้องกันกรณี settings ยังไม่ได้ตั้งค่า
     }
-  } catch(e) {
-    // network error หรือ GAS ไม่ตอบ → ไม่ต้อง block การใช้งาน
-  }
+  } catch(e) {}
 }
 
 function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -826,19 +821,68 @@ function showTab(name) {
   if (name === 'hr' && SESSION?.user?.role === 'admin') loadHRData();
 }
 
+// ฟังก์ชันตั้งค่า Dropdown เลือกเดือน (อัปเดต: ล็อกเดือนปัจจุบันสำหรับหน้าส่งข้อมูล)
 function initMonthSelectors() {
-  const now = new Date(), cy = now.getFullYear();
-  ['sel-month','adm-month','hist-month'].forEach(id => {
+  const now = new Date(), cy = now.getFullYear(), currentMonthIndex = now.getMonth();
+  const currentMonthValue = `${cy}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+  
+  // 1. สำหรับหน้า "ประวัติ" และ "สรุปข้อมูล Admin" (ยังคงให้กางเลือกดูย้อนหลังได้ทั้งปี)
+  ['adm-month', 'hist-month'].forEach(id => {
     const sel = document.getElementById(id); if (!sel) return; sel.innerHTML = '';
-    MONTHS.forEach((m,i) => { const o = document.createElement('option'); o.value = `${cy}-${String(i+1).padStart(2,'0')}`; o.textContent = `${m} ${cy}`; sel.appendChild(o); });
-    sel.value = `${cy}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    MONTHS.forEach((m, i) => { 
+        const o = document.createElement('option'); 
+        o.value = `${cy}-${String(i + 1).padStart(2, '0')}`; 
+        o.textContent = `${m} ${cy + 543}`; // แปลงเป็น พ.ศ. ให้สวยงาม
+        sel.appendChild(o); 
+    });
+    sel.value = currentMonthValue;
   });
+
+  // 2. สำหรับหน้า "ส่งข้อมูล" (sel-month) บังคับล็อกเป็นเดือนปัจจุบันเท่านั้น!
+  const selSubmit = document.getElementById('sel-month');
+  if(selSubmit) {
+      // ยัด option เข้าไปแค่เดือนเดียว
+      selSubmit.innerHTML = `<option value="${currentMonthValue}">${MONTHS[currentMonthIndex]} ${cy + 543}</option>`;
+      selSubmit.value = currentMonthValue;
+      
+      // แต่ง CSS ให้ดูรู้ว่ามันล็อกไว้ และปิดไม่ให้กดกาง Dropdown ได้
+      selSubmit.style.background = '#f1f5f9'; 
+      selSubmit.style.color = 'var(--teal)';
+      selSubmit.style.fontWeight = '600';
+      selSubmit.style.pointerEvents = 'none'; // ปิดการคลิก
+      selSubmit.style.border = '1px solid var(--border)';
+  }
 }
+
 function initPills() { 
   const html = FIXED.map((c,i) => `<span class="cp ${c.req?'r':'o'}"><span class="n">${i+1}.</span> ${c.label}</span>`).join('<span class="cp-arrow">➔</span>');
   document.getElementById('pills').innerHTML = html; 
 }
-function updateInfo() { const nets={'AIS':'AIS','TRUE':'TRUE','TRUE_RECEIVE':'TRUE รับสายอย่างเดียว'}; document.getElementById('ii-net').textContent=nets[document.getElementById('sel-net').value]||'(ยังไม่เลือก)'; const m=document.getElementById('sel-month').value; document.getElementById('ii-month').textContent=m?thaiMonthFromYYYYMM(m):''; }
+
+function updateInfo() { 
+  const nets={'AIS':'AIS','TRUE':'TRUE','TRUE_RECEIVE':'TRUE รับสายอย่างเดียว'}; 
+  document.getElementById('ii-net').textContent=nets[document.getElementById('sel-net').value]||'(ยังไม่เลือก)'; 
+  const m=document.getElementById('sel-month').value; 
+  document.getElementById('ii-month').textContent=m?thaiMonthFromYYYYMM(m):''; 
+}
+
+function checkPasteEnable() {
+    const selNet = document.getElementById('sel-net');
+    const pz = document.getElementById('pz');
+    const pzTitle = document.getElementById('pz-title');
+    
+    updateInfo();
+    
+    if(!selNet.value) {
+        pz.classList.add('disabled-zone');
+        pzTitle.textContent = 'กรุณาเลือกเครือข่ายก่อนวางข้อมูล';
+        selNet.classList.add('required-error');
+    } else {
+        pz.classList.remove('disabled-zone');
+        pzTitle.textContent = 'วางข้อมูลจาก Excel ลงที่นี่';
+        selNet.classList.remove('required-error');
+    }
+}
 
 function thaiMonthFromYYYYMM(yyyymm) { 
   if (!yyyymm || String(yyyymm).trim() === '' || String(yyyymm) === 'undefined') return '-';
@@ -857,44 +901,58 @@ function thaiMonthFromYYYYMM(yyyymm) {
 function setupPaste() { 
   const pz = document.getElementById('pz'); const hp = document.getElementById('hp'); 
   pz.addEventListener('dragover', e => e.preventDefault()); 
-  hp.addEventListener('paste', e => { e.preventDefault(); processData(e.clipboardData.getData('text/plain')); }); 
-  hp.addEventListener('focus', () => pz.classList.add('focused'));
+  hp.addEventListener('paste', e => { 
+      e.preventDefault(); 
+      if(!document.getElementById('sel-net').value) {
+          showToast('กรุณาเลือกเครือข่ายก่อนวางข้อมูล', true);
+          return;
+      }
+      processData(e.clipboardData.getData('text/plain')); 
+  }); 
+  hp.addEventListener('focus', () => { if(document.getElementById('sel-net').value) pz.classList.add('focused') });
   hp.addEventListener('blur', () => pz.classList.remove('focused'));
 }
 
-// ─── GLOBAL KEYDOWN: Enter = submit modal / Ctrl+V = paste ──────────────────
 document.addEventListener('keydown', e => {
-  // Ctrl+V / Cmd+V → focus textarea เพื่อรับ paste
   if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
     const appPage = document.getElementById('page-app');
     if (appPage && appPage.classList.contains('active')) {
-      document.getElementById('hp').focus();
+      if(!document.getElementById('sel-net').value) {
+          document.getElementById('sel-net').focus();
+          showToast('กรุณาเลือกเครือข่ายก่อนวางข้อมูล', true);
+      } else {
+          document.getElementById('hp').focus();
+      }
     }
     return;
   }
-  // Enter → ปุ่ม confirm ของ modal ที่เปิดอยู่
   if (e.key === 'Enter') {
-    // ถ้า focus อยู่ที่ input/textarea/select ใน modal ให้ผ่าน (ยกเว้น modal-changepw ที่จงใจรับ Enter)
     const tag = document.activeElement ? document.activeElement.tagName : '';
-    // login page
     if (document.getElementById('page-login').classList.contains('active')) {
       if (tag === 'INPUT') { e.preventDefault(); doLogin(); }
       return;
     }
-    // modal-changepw — Enter บันทึก
     const cpModal = document.getElementById('modal-changepw');
     if (cpModal && cpModal.classList.contains('on')) {
       if (tag === 'INPUT') { e.preventDefault(); doChangePassword(); }
       return;
     }
-    // modal-submit — Enter ยืนยัน
     const subModal = document.getElementById('modal-submit');
     if (subModal && subModal.classList.contains('on')) {
       e.preventDefault(); doSubmit(); return;
     }
   }
 });
-function focusPaste() { document.getElementById('hp').focus(); }
+
+function focusPaste() { 
+    if(!document.getElementById('sel-net').value) {
+        document.getElementById('sel-net').focus();
+        showToast('กรุณาเลือกเครือข่ายก่อนวางข้อมูล', true);
+    } else {
+        document.getElementById('hp').focus(); 
+    }
+}
+
 function isHeader(row) { const f = (row[0]||'').replace(/[-\s]/g,''); if (/^\d{6,}$/.test(f)) return false; return row.some(c => { const cl=c.toLowerCase(); return Object.values(ALIASES).some(a=>a.some(x=>cl.includes(x))); }); }
 function mapHeaders(hs) { const m={};const used=new Set(); hs.forEach((h,i)=>{ const hl=h.toLowerCase(); for(const[k,a] of Object.entries(ALIASES)){if(!used.has(k)&&a.some(x=>hl.includes(x))){m[i]=k;used.add(k);break;}} }); return m; }
 function processData(text) {
@@ -908,20 +966,74 @@ function processData(text) {
   renderTable(); validate(); document.getElementById('tc').style.display='flex'; updateInfo(); document.getElementById('btn-sub').disabled=true;
 }
 
+
+// ฟังก์ชัน renderTable (เจาะดึงข้อมูลหน่วยงานจาก hr_data โดยตรง ชัวร์ 100%)
 function renderTable() {
   const thead=document.getElementById('thead'), tbody=document.getElementById('tbody'); thead.innerHTML=''; tbody.innerHTML=''; const tr=document.createElement('tr');
-  S.headers.forEach((h,i)=>{ const th=document.createElement('th'); const key=S.colMap[i]; const def=key?FIXED.find(c=>c.key===key):null; th.textContent=def?def.label:h; if(def?.req)th.innerHTML+=' <span style="color:var(--teal)">*</span>'; tr.appendChild(th); });
+  
+  FULL_HEADERS.forEach(c=>{ const th=document.createElement('th'); th.textContent=c.label; tr.appendChild(th); });
   const th2=document.createElement('th'); th2.textContent='สถานะ HR'; tr.appendChild(th2); const th3=document.createElement('th'); th3.style.width='50px'; tr.appendChild(th3); thead.appendChild(tr);
+  
   S.rows.forEach((row,ri)=>{
     const tr=document.createElement('tr');
-    S.headers.forEach((_,ci)=>{
-      const td=document.createElement('td'); const val=(row[ci]||'').trim(); const key=S.colMap[ci]; const req=key?FIXED.find(c=>c.key===key)?.req:false;
-      const div=document.createElement('div'); div.contentEditable='true'; div.className='ec'; div.textContent=val; if(!val&&req) div.style.background='#fffbf0';
-      div.addEventListener('input',()=>{S.rows[ri][ci]=div.textContent;if(req)div.style.background=div.textContent.trim()?'':'#fffbf0';S.validated=false;document.getElementById('btn-sub').disabled=true;});
-      td.appendChild(div); tr.appendChild(td);
+    
+    FULL_HEADERS.forEach(col => {
+        const td=document.createElement('td'); 
+        let val = '';
+        
+        // 💡 บังคับดึงค่าจาก hr_data ตรงๆ เพื่อความชัวร์ขั้นสุด
+        if (row._enriched) {
+            if (col.key === 'dept_code') {
+                val = (row._enriched.hr_data && row._enriched.hr_data.dept_code) || row._enriched.dept_code || '';
+            } else if (col.key === 'dept_name') {
+                val = (row._enriched.hr_data && row._enriched.hr_data.dept_name) || row._enriched.dept_name || '';
+            } else {
+                val = row._enriched[col.key] || '';
+            }
+        }
+        
+        // ถ้าไม่มีข้อมูลจากการตรวจ HR ให้ดึงจากที่ Paste มาตอนแรก
+        if (!val) {
+            const cIdx = Object.keys(S.colMap).find(idx => S.colMap[idx] === col.key);
+            if(cIdx !== undefined) val = row[cIdx] || '';
+        }
+
+        // จัดการเบอร์โทร (เติมเลข 0)
+        if(col.key === 'phone') {
+            val = String(val).replace(/\D/g, ''); 
+            if(val.length === 9 && !val.startsWith('0')) val = '0' + val; 
+        }
+
+        const editable = (col.key === 'phone' || col.key === 'emp_id');
+        const div=document.createElement('div'); 
+        div.contentEditable = editable ? 'true' : 'false'; 
+        div.className = editable ? 'ec' : ''; 
+        
+        // ตกแต่งสี
+        if(!editable) div.style.color = 'var(--muted)';
+        
+        // ไฮไลต์สีเขียวให้ รหัส/ชื่อหน่วยงาน ที่ระบบดึงมาเติมให้
+        if(row._enriched && (col.key === 'dept_code' || col.key === 'dept_name') && val) {
+            div.style.color = 'var(--teal)';
+            div.style.fontWeight = '600';
+        }
+
+        div.textContent=(val||'').trim(); 
+        
+        if(editable) {
+            div.addEventListener('input',()=>{
+                const cIdx = Object.keys(S.colMap).find(idx => S.colMap[idx] === col.key);
+                if(cIdx !== undefined) S.rows[ri][cIdx] = div.textContent;
+                S.validated=false; document.getElementById('btn-sub').disabled=true;
+                validate(); 
+            });
+        }
+        td.appendChild(div); tr.appendChild(td);
     });
-    const hrtd=document.createElement('td'); const hrStatus=row._hr_status||'pending'; const hrNote=row._hr_note||'';
-    hrtd.innerHTML=`<div style="display:flex;flex-direction:column;align-items:flex-start"><span class="hr-badge hr-${hrStatus}">${{matched:'✓ ข้อมูลตรง',mismatch:'⚠ ชื่อไม่ตรง',not_found:'✗ ไม่พบรหัส',resigned:'✗ ลาออกแล้ว',pending:'รอตรวจสอบ'}[hrStatus]||hrStatus}</span>${hrNote?`<span style="font-size:11px;color:var(--amber);">${hrNote}</span>`:''}</div>`; tr.appendChild(hrtd);
+
+    const hrtd=document.createElement('td'); 
+    const hrStatus=row._hr_status||'pending'; const hrNote=row._hr_note||'';
+    hrtd.innerHTML=`<div style="display:flex;flex-direction:column;align-items:flex-start"><span class="hr-badge hr-${hrStatus}">${{matched:'✓ ตรง',mismatch:'⚠ เติมชื่อให้แล้ว',not_found:'✗ ไม่พบรหัส',resigned:'⚠ ลาออกแล้ว',pending:'รอตรวจสอบ'}[hrStatus]||hrStatus}</span>${hrNote?`<span style="font-size:11px;color:var(--amber);margin-top:4px;line-height:1.2">${hrNote}</span>`:''}</div>`; tr.appendChild(hrtd);
     
     const dtd=document.createElement('td'); dtd.className='dtd'; const db=document.createElement('button'); db.className='db'; db.title='ลบข้อมูลแถวนี้';
     db.innerHTML='<svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
@@ -930,106 +1042,115 @@ function renderTable() {
   document.getElementById('rc').textContent=S.rows.length+' รายการ';
 }
 
-function validate() { document.getElementById('vb').className='vb on'; document.getElementById('vm').textContent='กรุณากดปุ่ม "ตรวจสอบ HR" ก่อนส่งข้อมูล'; document.getElementById('viss').innerHTML=''; }
+function validate() { document.getElementById('vb').className='vb on'; document.getElementById('vm').textContent='กรุณากดปุ่ม "ตรวจสอบ HR" เพื่อเติมข้อมูลจากระบบให้สมบูรณ์ก่อนกดส่ง'; document.getElementById('viss').innerHTML=''; }
 
+// 💡 2. ฟังก์ชัน runValidate ที่แก้ไขให้จัดการเบอร์ตอนเช็ค HR
 async function runValidate() {
   if(!S.rows.length) return; const btn=document.getElementById('btn-val'); btn.innerHTML='กำลังตรวจ...'; btn.disabled=true;
-  const rows = S.rows.map(row => { const obj={}; S.headers.forEach((_,ci)=>{ const key=S.colMap[ci]; if(key) obj[key]=row[ci]||''; }); return obj; });
+  
+  const rows = S.rows.map((row, ri) => {
+      const obj={};
+      S.headers.forEach((_,ci)=>{
+          const key=S.colMap[ci];
+          if(key) {
+              let val = row[ci]||'';
+              if(key === 'phone') {
+                  val = String(val).replace(/\D/g, '');
+                  if(val.length === 9 && !val.startsWith('0')) {
+                      val = '0' + val;
+                      S.rows[ri][ci] = val; 
+                  }
+              }
+              obj[key]=val;
+          }
+      });
+      return obj;
+  });
+  
   try {
     const res = await gasPost('validate_hr', {rows}); if(!res.ok) throw new Error(res.error);
     
-    const posIdx = Object.keys(S.colMap).find(k => S.colMap[k] === 'position');
-    const dcodeIdx = Object.keys(S.colMap).find(k => S.colMap[k] === 'dept_code');
-    const dnameIdx = Object.keys(S.colMap).find(k => S.colMap[k] === 'dept_name');
-    let discrepancyCount = 0;
-
     res.results.forEach((r,i)=>{ 
         S.rows[i]._hr_status = r.hr_status; 
         S.rows[i]._hr_note = r.hr_note||''; 
-        if (r.hr_data) {
-            S.rows[i]._hr_data = r.hr_data; 
-            const cPos = String(S.rows[i][posIdx] || '').trim();
-            const cDcode = String(S.rows[i][dcodeIdx] || '').trim();
-            const cDname = String(S.rows[i][dnameIdx] || '').trim();
-            if (cPos !== r.hr_data.position || cDcode !== r.hr_data.dept_code || cDname !== r.hr_data.dept_name) {
-                discrepancyCount++;
-                S.rows[i]._needs_sync = true;
-            } else {
-                S.rows[i]._needs_sync = false;
-            }
-        }
+        // เก็บข้อมูลทั้งหมด (รวมถึง dept_code, dept_name) ไว้ใน _enriched เพื่อให้ renderTable เอาไปวาด
+        S.rows[i]._enriched = r; 
     }); 
     
     S.validated = true; 
-    
-    if (discrepancyCount > 0) {
-        document.getElementById('sync-hr-msg').textContent = `พบข้อมูลตำแหน่งหรือหน่วยงาน ไม่ตรงกับระบบ HR จำนวน ${discrepancyCount} รายการ`;
-        document.getElementById('modal-sync-hr').classList.add('on');
-    } else {
-        finishValidation();
-    }
+    finishValidation(); 
   } catch(e) { showToast(e.message, true); btn.innerHTML='ตรวจสอบ HR'; btn.disabled=false; }
 }
-
-function doSyncHR() {
-    const posIdx = Object.keys(S.colMap).find(k => S.colMap[k] === 'position');
-    const dcodeIdx = Object.keys(S.colMap).find(k => S.colMap[k] === 'dept_code');
-    const dnameIdx = Object.keys(S.colMap).find(k => S.colMap[k] === 'dept_name');
-    S.rows.forEach(row => {
-        if (row._needs_sync && row._hr_data) {
-            if (posIdx !== undefined) row[posIdx] = row._hr_data.position;
-            if (dcodeIdx !== undefined) row[dcodeIdx] = row._hr_data.dept_code;
-            if (dnameIdx !== undefined) row[dnameIdx] = row._hr_data.dept_name;
-            row._needs_sync = false;
-        }
-    });
-    closeModal('modal-sync-hr'); showToast('อัปเดตข้อมูลตามระบบ HR สำเร็จ ✓'); finishValidation();
-}
-function cancelSyncHR() { closeModal('modal-sync-hr'); finishValidation(); }
-
 function finishValidation() {
     renderTable();
-    const blocked = S.rows.filter(r=>r._hr_status==='not_found' || r._hr_status==='resigned').length;
+    const not_found = S.rows.filter(r=>r._hr_status==='not_found').length;
+    const resigned = S.rows.filter(r=>r._hr_status==='resigned').length;
     const mismatch = S.rows.filter(r=>r._hr_status==='mismatch').length;
     const matched = S.rows.filter(r=>r._hr_status==='matched').length;
 
     const bar=document.getElementById('vb'); bar.className='vb on'; const vm=document.getElementById('vm'); const vi=document.getElementById('vi');
-    if(blocked>0){
+    
+    document.getElementById('btn-sub').disabled = false;
+
+    if(not_found>0){
       bar.classList.remove('ok', 'warn'); bar.classList.add('err');
-      vm.textContent=`พบข้อผิดพลาด: มี ${blocked} รายการที่ไม่พบในฐานข้อมูล HR หรือลาออกไปแล้ว`;
+      vm.textContent=`คำเตือน: มี ${not_found} รายการที่ไม่พบในฐานข้อมูล HR (ข้อมูลจะถูกส่งเข้าระบบ แต่ถูกระบุหมายเหตุไว้)`;
       vi.innerHTML='<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>';
-      document.getElementById('btn-sub').disabled = true;
-    } else if(mismatch>0){
+    } else if(resigned>0 || mismatch>0){
       bar.classList.remove('ok', 'err'); bar.classList.add('warn');
-      vm.textContent=`ข้อสังเกต: มี ${mismatch} รายการที่ชื่อไม่ตรงกับ HR (ระบบจะอนุญาตให้ส่งข้อมูลได้ โดยบันทึกหมายเหตุไว้)`;
+      vm.textContent=`ข้อสังเกต: ตรวจพบพนักงานลาออก ${resigned} คน และ แก้ไขชื่อให้ตรงกับระบบ ${mismatch} คน (คุณสามารถกดส่งข้อมูลได้)`;
       vi.innerHTML='<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>';
-      document.getElementById('btn-sub').disabled = false;
     } else {
       bar.classList.remove('warn', 'err'); bar.classList.add('ok');
-      vm.textContent=`ยอดเยี่ยม! ข้อมูลผ่านเกณฑ์ตรวจสอบ HR ทั้งหมด (${matched} รายการ) พร้อมส่งข้อมูลแล้ว`;
+      vm.textContent=`ยอดเยี่ยม! ระบบเติมข้อมูลเรียบร้อยและผ่านเกณฑ์ตรวจสอบ HR ทั้งหมด (${matched} รายการ) พร้อมส่งข้อมูลแล้ว`;
       vi.innerHTML='<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
-      document.getElementById('btn-sub').disabled = false;
     }
     const btn=document.getElementById('btn-val'); btn.innerHTML='ตรวจสอบ HR'; btn.disabled=false;
 }
 
 function openSubmitModal() { document.getElementById('modal-submit').classList.add('on'); }
 
+
+// ฟังก์ชัน doSubmit (อัปเดต: ดึงรหัส/ชื่อหน่วยงาน แพ็คส่ง Server)
 async function doSubmit() {
   closeModal('modal-submit'); const btn=document.getElementById('btn-sub'); btn.disabled=true; btn.innerHTML='กำลังส่ง...';
-  const rows = S.rows.map(row => { const obj={}; S.headers.forEach((_,ci)=>{ const key=S.colMap[ci]; if(key) obj[key]=row[ci]||''; }); return obj; });
+
+  const rowsToSubmit = S.rows.map(row => {
+      // ฟังก์ชันช่วยดึงค่า fallback จากข้อมูลที่ Paste มาตอนแรก
+      let getVal = (key) => {
+          const cIdx = Object.keys(S.colMap).find(idx => S.colMap[idx] === key);
+          return cIdx !== undefined ? row[cIdx] : '';
+      };
+
+      // 💡 เจาะลึกดึงข้อมูลหน่วยงานจาก hr_data ตรงๆ แพ็คใส่กระเป๋าเตรียมส่ง!
+      let dCode = (row._enriched && row._enriched.hr_data) ? row._enriched.hr_data.dept_code : (row._enriched ? row._enriched.dept_code : '');
+      let dName = (row._enriched && row._enriched.hr_data) ? row._enriched.hr_data.dept_name : (row._enriched ? row._enriched.dept_name : '');
+      let fName = (row._enriched && row._enriched.hr_data) ? row._enriched.hr_data.first_name : (row._enriched ? row._enriched.first_name : '');
+      let lName = (row._enriched && row._enriched.hr_data) ? row._enriched.hr_data.last_name : (row._enriched ? row._enriched.last_name : '');
+      let pos   = (row._enriched && row._enriched.hr_data) ? row._enriched.hr_data.position : (row._enriched ? row._enriched.position : '');
+
+      return {
+          phone: row._enriched ? row._enriched.phone : getVal('phone'),
+          emp_id: row._enriched ? row._enriched.emp_id : getVal('emp_id'),
+          first_name: fName || getVal('first_name'),
+          last_name: lName || getVal('last_name'),
+          position: pos || getVal('position'),
+          dept_code: dCode,     // ส่งรหัสหน่วยงาน
+          dept_name: dName      // ส่งชื่อหน่วยงาน
+      };
+  });
+
   try {
-    const res = await gasPost('submit_sim', { month: document.getElementById('sel-month').value, network: document.getElementById('sel-net').value, rows });
+    const res = await gasPost('submit_sim', { month: document.getElementById('sel-month').value, network: document.getElementById('sel-net').value, rows: rowsToSubmit });
     if(!res.ok) throw new Error(res.error);
     
     let msg = 'ส่งข้อมูลสำเร็จ ✓';
-    if(res.skipped > 0) {
-        msg += ` (ตัดเบอร์ซ้ำทิ้ง ${res.skipped} รายการ)`;
-    }
+    if(res.skipped > 0) msg += ` (ตัดเบอร์ซ้ำทิ้ง ${res.skipped} รายการ)`;
     showToast(msg); 
     clearData();
   } catch(e) { showToast(e.message, true); } finally { btn.innerHTML='ส่งข้อมูล'; btn.disabled=false; }
 }
+
 
 function clearData() { S={rows:[],colMap:{},headers:[],mode:'',validated:false}; document.getElementById('pz').classList.remove('filled'); document.getElementById('idle-view').style.display=''; document.getElementById('filled-view').style.display='none'; document.getElementById('tc').style.display='none'; document.getElementById('btn-sub').disabled=true; document.getElementById('hp').value=''; }
 
@@ -1079,6 +1200,7 @@ function filterHist(status) {
     renderHistoryTable();
 }
 
+// ฟังก์ชันวาดตารางประวัติ (เพิ่ม รหัส และ ชื่อหน่วยงาน)
 function renderHistoryTable() {
     const tbody = document.getElementById('hist-body');
     let filtered = HIST_DATA;
@@ -1086,7 +1208,7 @@ function renderHistoryTable() {
         filtered = HIST_DATA.filter(r => r.status === currentHistFilter);
     }
     if(!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">ไม่มีข้อมูล</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">ไม่มีข้อมูล</td></tr>';
         return;
     }
     tbody.innerHTML = filtered.map(r => `
@@ -1095,12 +1217,13 @@ function renderHistoryTable() {
             <td style="font-family:var(--mono); color:var(--teal); font-weight:600">${r.phone}</td>
             <td style="font-family:var(--mono); font-size:12.5px">${r.emp_id}</td>
             <td style="font-weight:500; color:var(--navy)">${r.first_name} ${r.last_name}</td>
-            <td><span class="status-pill ${r.status==='submitted'?'pill-active':'pill-inactive'}">${r.status==='submitted'?'ผ่าน':'ไม่ผ่าน'}</span></td>
+            <td style="font-size:12px">${r.dept_code || '-'}</td>
+            <td style="font-size:12px">${r.dept_name || '-'}</td>
+            <td><span class="status-pill ${r.status==='submitted'?'pill-active':'pill-inactive'}">${r.status==='submitted'?'ส่งสำเร็จ':'ไม่สำเร็จ'}</span></td>
             <td style="font-size:12px; color:${r.status==='submitted'?'var(--muted)':'var(--red)'}">${r.fail_reason || '-'}</td>
         </tr>
     `).join('');
 }
-
 async function loadAdminData() { 
   loadUsers(); 
   loadSettingsForm(); 
@@ -1115,7 +1238,7 @@ async function loadAdminSim() {
   if (!tbody || !monthSel) return;
   const month = monthSel.value;
   
-  tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)"><div class="spinner" style="border-color:var(--border);border-top-color:var(--muted)"></div> กำลังโหลด...</td></tr>';
+  tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)"><div class="spinner" style="border-color:var(--border);border-top-color:var(--muted)"></div> กำลังโหลด...</td></tr>';
   
   try {
     const res=await gasPost('get_sim_data',{ month });
@@ -1130,7 +1253,7 @@ async function loadAdminSim() {
     
     filterAdminSim(adminCurrentFilter);
   } catch(e) {
-      tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--red)">${e.message}</td></tr>`;
+      tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--red)">${e.message}</td></tr>`;
   }
 }
 
@@ -1146,6 +1269,7 @@ function filterAdminSim(type) {
     renderAdminSimTable();
 }
 
+// ฟังก์ชันวาดตารางสรุปสำหรับ Admin (เพิ่ม รหัส และ ชื่อหน่วยงาน)
 function renderAdminSimTable() {
     const tbody = document.getElementById('adm-sim-body');
     let data = ADMIN_SIM_DATA;
@@ -1169,10 +1293,13 @@ function renderAdminSimTable() {
         <td style="font-family:var(--mono);color:var(--teal);font-weight:600">${r.phone}</td>
         <td style="font-family:var(--mono);font-size:12.5px">${r.emp_id}</td>
         <td style="font-weight:500;color:var(--navy)">${r.first_name} ${r.last_name}</td>
-        <td style="font-size:12px">${r.position}</td>
-        <td style="font-size:12px">${r.dept_name}</td>
-        <td><span style="background:var(--blue-l);color:var(--blue);padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600">${r.package}</span></td>
-        <td><span class="hr-badge hr-${r.hr_status}">${{matched:'✓ ตรง',mismatch:'⚠ ไม่ตรง',not_found:'✗ ไม่พบ',resigned:'✗ ลาออก'}[r.hr_status]||r.hr_status}</span></td>
+        <td style="font-size:12px">${r.position || '-'}</td>
+        <td style="font-size:12px">${r.dept_code || '-'}</td>
+        <td style="font-size:12px">${r.dept_name || '-'}</td>
+        <td>
+           <span class="hr-badge hr-${r.hr_status}">${{matched:'✓ ตรง',mismatch:'⚠ เติมชื่อ',not_found:'✗ ไม่พบ',resigned:'⚠ ลาออก'}[r.hr_status]||r.hr_status}</span>
+           ${r.fail_reason ? `<div style="font-size:11px;color:var(--amber);margin-top:4px">${r.fail_reason}</div>`:''}
+        </td>
         <td style="white-space:nowrap;">
             <div style="font-family:var(--mono); font-size:11px; color:var(--muted)">${r.sender_emp_id}</div>
             <div style="font-weight:600; font-size:12px; color:var(--navy)">${r.sender_name}</div>
@@ -1180,19 +1307,18 @@ function renderAdminSimTable() {
       </tr>
     `).join('');
 }
-
 function exportCSV() {
   const month = document.getElementById('adm-month').value;
   const tbody = document.getElementById('adm-sim-body');
   const rows = [...tbody.querySelectorAll('tr')];
   if(!rows.length || rows[0].innerText.includes('ไม่มีข้อมูล') || rows[0].innerText.includes('กำลังโหลด')) return showToast('ไม่มีข้อมูลให้ Export', true);
   
-  let csv = 'เครือข่าย,เบอร์โทรศัพท์,รหัสพนักงาน,ชื่อ-สกุล,ตำแหน่ง,หน่วยงาน,Package,สถานะ HR,รหัสผู้ส่ง,ชื่อผู้ส่ง\n';
+  let csv = 'เครือข่าย,เบอร์โทรศัพท์,รหัสพนักงาน,ชื่อ-สกุล,ตำแหน่ง,หน่วยงาน,สถานะ HR,หมายเหตุ HR,รหัสผู้ส่ง,ชื่อผู้ส่ง\n';
   
   ADMIN_SIM_DATA.forEach(r => {
       let row = [
           r.network, r.phone, r.emp_id, `${r.first_name} ${r.last_name}`, 
-          r.position, r.dept_name, r.package, r.hr_status, 
+          r.position, r.dept_name, r.hr_status, r.fail_reason, 
           r.sender_emp_id, r.sender_name
       ];
       csv += row.map(v => `"${String(v||'').replace(/"/g, '""')}"`).join(',') + '\n';
@@ -1235,7 +1361,7 @@ function openUserModal(user_id = null) {
     if (user_id) {
       const u = USERS_DATA.find(x => x.user_id === user_id);
       document.getElementById('uf_emp_id').value = u.emp_id || '';
-      document.getElementById('uf_emp_id').disabled = true; // ล็อกตอนแก้ไข
+      document.getElementById('uf_emp_id').disabled = true; 
       document.getElementById('uf_email').value = u.email || '';
       document.getElementById('uf_display_name').value = u.display_name || '';
       document.getElementById('uf_role').value = u.role || 'user';
@@ -1244,7 +1370,7 @@ function openUserModal(user_id = null) {
       document.getElementById('uf_is_active').value = String(u.is_active).trim().toUpperCase() === 'FALSE' ? 'FALSE' : 'TRUE';
     } else {
       document.getElementById('uf_emp_id').value = '';
-      document.getElementById('uf_emp_id').disabled = false; // เปิดให้กรอกตอนสร้างใหม่
+      document.getElementById('uf_emp_id').disabled = false; 
       document.getElementById('uf_email').value = '';
       document.getElementById('uf_display_name').value = '';
       document.getElementById('uf_role').value = 'user';
@@ -1259,7 +1385,7 @@ function openUserModal(user_id = null) {
 async function saveUser() {
   const payload = {
     user_id: document.getElementById('uf_user_id').value,
-    emp_id: document.getElementById('uf_emp_id').value, // เพิ่มส่งรหัสพนักงาน
+    emp_id: document.getElementById('uf_emp_id').value,
     email: document.getElementById('uf_email').value,
     display_name: document.getElementById('uf_display_name').value,
     role: document.getElementById('uf_role').value,
@@ -1360,7 +1486,6 @@ function updateHRDashboard() {
   if (elActive) elActive.textContent = active.toLocaleString();
   if (elResigned) elResigned.textContent = resigned.toLocaleString();
 
-  // ใส่ตัวเลขพนักงานทั้งหมดไว้ตรงกลางกราฟโดนัท
   const chartTotalText = document.getElementById('chart-total-text');
   if (chartTotalText) chartTotalText.textContent = total.toLocaleString();
   
