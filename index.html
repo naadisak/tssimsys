@@ -1307,19 +1307,33 @@ function renderAdminSimTable() {
       </tr>
     `).join('');
 }
+// ฟังก์ชัน Export CSV (อัปเดต: เพิ่มคอลัมน์ รหัสหน่วยงาน)
 function exportCSV() {
   const month = document.getElementById('adm-month').value;
   const tbody = document.getElementById('adm-sim-body');
   const rows = [...tbody.querySelectorAll('tr')];
-  if(!rows.length || rows[0].innerText.includes('ไม่มีข้อมูล') || rows[0].innerText.includes('กำลังโหลด')) return showToast('ไม่มีข้อมูลให้ Export', true);
   
-  let csv = 'เครือข่าย,เบอร์โทรศัพท์,รหัสพนักงาน,ชื่อ-สกุล,ตำแหน่ง,หน่วยงาน,สถานะ HR,หมายเหตุ HR,รหัสผู้ส่ง,ชื่อผู้ส่ง\n';
+  if(!rows.length || rows[0].innerText.includes('ไม่มีข้อมูล') || rows[0].innerText.includes('กำลังโหลด')) {
+      return showToast('ไม่มีข้อมูลให้ Export', true);
+  }
+  
+  // 💡 เพิ่มหัวตาราง "รหัสหน่วยงาน" และแก้ชื่อ "หน่วยงาน" เป็น "ชื่อหน่วยงาน" ให้ชัดเจน
+  let csv = 'เครือข่าย,เบอร์โทรศัพท์,รหัสพนักงาน,ชื่อ-สกุล,ตำแหน่ง,รหัสหน่วยงาน,ชื่อหน่วยงาน,สถานะ HR,หมายเหตุ HR,รหัสผู้ส่ง,ชื่อผู้ส่ง\n';
   
   ADMIN_SIM_DATA.forEach(r => {
+      // 💡 แทรก r.dept_code เข้าไปก่อน r.dept_name
       let row = [
-          r.network, r.phone, r.emp_id, `${r.first_name} ${r.last_name}`, 
-          r.position, r.dept_name, r.hr_status, r.fail_reason, 
-          r.sender_emp_id, r.sender_name
+          r.network, 
+          r.phone, 
+          r.emp_id, 
+          `${r.first_name} ${r.last_name}`, 
+          r.position, 
+          r.dept_code,    // <--- ดึงรหัสหน่วยงานมาใส่ตรงนี้
+          r.dept_name,    // <--- ดึงชื่อหน่วยงาน
+          r.hr_status, 
+          r.fail_reason, 
+          r.sender_emp_id, 
+          r.sender_name
       ];
       csv += row.map(v => `"${String(v||'').replace(/"/g, '""')}"`).join(',') + '\n';
   });
